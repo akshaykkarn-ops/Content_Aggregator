@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - Content Aggregator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1">{{ article.title }}</h5>
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="bi bi-globe me-1"></i> {{ article.source.name }}
+                            <span class="mx-2">•</span>
+                            <i class="bi bi-calendar me-1"></i> 
+                            {% if article.published_date %}
+                                {{ article.published_date.strftime('%B %d, %Y') }}
+                            {% else %}
+                                {{ article.scraped_date.strftime('%B %d, %Y') }}
+                            {% endif %}
+                            {% if article.author %}
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-person me-1"></i> {{ article.author }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="{{ url_for('index') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Keywords -->
+                {% if article.keywords %}
+                <div class="mb-3">
+                    <h6>Matching Keywords:</h6>
+                    {% for article_keyword in article.keywords %}
+                        <span class="keyword-tag">
+                            {{ article_keyword.keyword.term }}
+                            {% if article_keyword.relevance_score > 0 %}
+                                <span class="relevance-score">
+                                    {{ "%.0f"|format(article_keyword.relevance_score * 100) }}%
+                                </span>
+                            {% endif %}
+                        </span>
+                    {% endfor %}
+                </div>
+                <hr>
+                {% endif %}
+                
+                <!-- Content -->
+                <div class="content">
+                    {% if article.content %}
+                        {{ article.content | replace('\n', '<br>') | safe }}
+                    {% else %}
+                        <p class="text-muted">No content preview available.</p>
+                    {% endif %}
+                </div>
+                
+                <hr>
+                
+                <!-- Actions -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{{ article.url }}" target="_blank" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-up-right"></i> Read Full Article
+                        </a>
+                    </div>
+                    <small class="text-muted">
+                        Scraped on {{ article.scraped_date.strftime('%B %d, %Y at %H:%M') }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
