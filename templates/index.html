@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Content Aggregator{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="mb-3">
+            <i class="bi bi-collection-fill"></i> Your Personalized Content Feed
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="bi bi-file-text"></i>
+                    <span id="total-articles">-</span>
+                </h5>
+                <p class="card-text">Total Articles</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="bi bi-tags"></i>
+                    <span id="total-keywords">-</span>
+                </h5>
+                <p class="card-text">Active Keywords</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="bi bi-globe"></i>
+                    <span id="total-sources">-</span>
+                </h5>
+                <p class="card-text">Active Sources</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">
+                    <i class="bi bi-calendar-day"></i>
+                    <span id="recent-articles">-</span>
+                </h5>
+                <p class="card-text">Today's Articles</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="GET" class="d-flex">
+            <input type="text" name="keyword" class="form-control me-2" 
+                   placeholder="Filter by keyword..." value="{{ keyword_filter }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i> Filter
+            </button>
+        </form>
+    </div>
+    <div class="col-md-6 text-end">
+        {% if keyword_filter %}
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Clear Filter
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Articles -->
+<div class="row">
+    {% if articles.items %}
+        {% for article in articles.items %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card article-card h-100 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-globe"></i> {{ article.source.name }}
+                        </small>
+                        <small class="text-muted">
+                            {{ article.scraped_date.strftime('%m/%d %H:%M') }}
+                        </small>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <a href="{{ url_for('view_article', article_id=article.id) }}" 
+                               class="text-decoration-none">
+                                {{ article.title[:100] }}{% if article.title|length > 100 %}...{% endif %}
+                            </a>
+                        </h6>
+                        
+                        <p class="card-text text-muted small">
+                            {{ article.content[:200] }}{% if article.content|length > 200 %}...{% endif %}
+                        </p>
+                        
+                        <!-- Keywords -->
+                        <div class="mb-2">
+                            {% for article_keyword in article.keywords %}
+                                <span class="keyword-tag">
+                                    {{ article_keyword.keyword.term }}
+                                    {% if article_keyword.relevance_score > 0 %}
+                                        <span class="relevance-score">
+                                            {{ "%.0f"|format(article_keyword.relevance_score * 100) }}%
+                                        </span>
+                                    {% endif %}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ article.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-box-arrow-up-right"></i> Read Original
+                            </a>
+                            {% if article.author %}
+                                <small class="text-muted">{{ article.author }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="card">
+                <div class="card-body">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #6c757d;"></i>
+                    <h4 class="mt-3">No Articles Found</h4>
+                    <p class="text-muted">
+                        {% if keyword_filter %}
+                            No articles match your current filter. Try adjusting your search terms.
+                        {% else %}
+                            No articles have been scraped yet. Add some keywords and sources, then trigger a manual scrape.
+                        {% endif %}
+                    </p>
+                    <div class="mt-3">
+                        <a href="{{ url_for('manage_keywords') }}" class="btn btn-primary me-2">
+                            <i class="bi bi-tags"></i> Manage Keywords
+                        </a>
+                        <a href="{{ url_for('manage_sources') }}" class="btn btn-secondary me-2">
+                            <i class="bi bi-globe"></i> Manage Sources
+                        </a>
+                        <a href="{{ url_for('manual_scrape') }}" class="btn btn-success">
+                            <i class="bi bi-arrow-clockwise"></i> Start Scraping
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if articles.pages > 1 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="Articles pagination">
+            <ul class="pagination justify-content-center">
+                {% if articles.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('index', page=articles.prev_num, keyword=keyword_filter) }}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in articles.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != articles.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('index', page=page_num, keyword=keyword_filter) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if articles.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('index', page=articles.next_num, keyword=keyword_filter) }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load statistics via API
+fetch('/api/stats')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('total-articles').textContent = data.total_articles;
+        document.getElementById('total-keywords').textContent = data.total_keywords;
+        document.getElementById('total-sources').textContent = data.total_sources;
+        document.getElementById('recent-articles').textContent = data.recent_articles;
+    })
+    .catch(error => console.error('Error loading stats:', error));
+</script>
+{% endblock %}
