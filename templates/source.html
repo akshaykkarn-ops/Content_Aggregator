@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Sources - Content Aggregator{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="mb-3">
+            <i class="bi bi-globe"></i> Manage Content Sources
+        </h1>
+        <p class="text-muted">Sources are websites and RSS feeds from which content is automatically scraped.</p>
+    </div>
+</div>
+
+<!-- Add New Source -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> Add New Source
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_source') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Source Name</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   placeholder="e.g., TechCrunch" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="source_type" class="form-label">Source Type</label>
+                            <select class="form-select" id="source_type" name="source_type">
+                                <option value="rss">RSS Feed</option>
+                                <option value="website">Website</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="url" class="form-label">URL</label>
+                        <input type="url" class="form-control" id="url" name="url" 
+                               placeholder="https://example.com/rss" required>
+                        <div class="form-text">For RSS feeds, provide the feed URL. For websites, provide the main page URL.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> Add Source
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sources List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Your Sources ({{ sources|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if sources %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Last Scraped</th>
+                                    <th>Articles</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for source in sources %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ source.name }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <a href="{{ source.url }}" target="_blank" class="text-decoration-none">
+                                                {{ source.url[:50] }}{% if source.url|length > 50 %}...{% endif %}
+                                                <i class="bi bi-box-arrow-up-right"></i>
+                                            </a>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if source.source_type == 'rss' %}
+                                            <span class="badge bg-primary">RSS</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Website</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if source.active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if source.last_scraped %}
+                                            <small class="text-muted">
+                                                {{ source.last_scraped.strftime('%m/%d %H:%M') }}
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted">Never</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ source.articles|length }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('toggle_source', source_id=source.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-toggle-{{ 'on' if source.active else 'off' }}"></i>
+                                            {{ 'Deactivate' if source.active else 'Activate' }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-globe" style="font-size: 3rem; color: #6c757d;"></i>
+                        <h4 class="mt-3">No Sources Yet</h4>
+                        <p class="text-muted">Add your first content source to start aggregating articles.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Example Sources -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Example Sources
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Here are some popular RSS feeds you can add:</p>
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <strong>Technology:</strong>
+                        <ul class="small">
+                            <li>Hacker News: https://hnrss.org/frontpage</li>
+                            <li>TechCrunch: https://techcrunch.com/feed/</li>
+                            <li>Ars Technica: http://feeds.arstechnica.com/arstechnica/index</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <strong>Science:</strong>
+                        <ul class="small">
+                            <li>Science Daily: https://www.sciencedaily.com/rss/all.xml</li>
+                            <li>Nature: https://www.nature.com/nature.rss</li>
+                            <li>ArXiv CS: https://rss.arxiv.org/rss/cs</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <strong>Reddit:</strong>
+                        <ul class="small">
+                            <li>r/technology: https://www.reddit.com/r/technology/.rss</li>
+                            <li>r/programming: https://www.reddit.com/r/programming/.rss</li>
+                            <li>r/MachineLearning: https://www.reddit.com/r/MachineLearning/.rss</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
